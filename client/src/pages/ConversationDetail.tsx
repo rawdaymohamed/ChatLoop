@@ -360,8 +360,14 @@ export default function ConversationDetail() {
     // ── join / leave socket room ─────────────────────────────────────────
     useEffect(() => {
         if (!id) return
-        emitJoinChat(id)
+        const joinRoom = () => {
+            emitJoinChat(id)
+        }
+
+        joinRoom()
+        socket.on("connect", joinRoom)
         return () => {
+            socket.off("connect", joinRoom)
             emitLeaveChat(id)
             setActiveChatId("")
             setReceiver(null)

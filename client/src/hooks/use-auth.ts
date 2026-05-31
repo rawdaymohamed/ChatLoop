@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { authApi } from "../lib/api";
-import { connectSocket, emitSetup, disconnectSocket } from "../lib/socket";
+import socket, { connectSocket, emitSetup, disconnectSocket } from "../lib/socket";
 import { useContext } from "react";
 import { createContext } from "react";
 
@@ -22,6 +22,28 @@ export const useAuthProvider = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isUserLoading, setIsUserLoading] = useState(true);
 
+    useEffect(() => {
+        const onConnect = () => {
+            emitSetup();
+        };
+
+        socket.on("connect", onConnect);
+        return () => {
+            socket.off("connect", onConnect);
+        };
+    }, []);
+
+    const connectAndSetup = () => {
+        connectSocket();
+
+        // If the socket is already connected, emit setup immediately.
+        // Otherwise the `connect` listener above will re-run setup as soon as
+        // the transport comes back up.
+        if (socket.connected) {
+            emitSetup();
+        }
+    };
+
     const _postLogin = async (userData?: User | null) => {
         if (userData) {
             setUser(userData as User);
@@ -29,8 +51,7 @@ export const useAuthProvider = () => {
             const me = await authApi.getMe<User>();
             setUser(me);
         }
-        connectSocket();
-        emitSetup();
+        connectAndSetup();
     };
 
     const login = async (email: string, password: string) => {
@@ -63,8 +84,7 @@ export const useAuthProvider = () => {
                 const user = await authApi.getMe<User>();
                 setUser(user);
 
-                connectSocket();
-                emitSetup();
+                connectAndSetup();
             } catch {
                 setUser(null);
             } finally {

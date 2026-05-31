@@ -58,6 +58,10 @@ const initSocket = (server) => {
   io.on("connection", (socket) => {
     console.log(`New connection: ${socket.id} (user: ${socket.userId})`);
 
+    // Join the user's personal room immediately so push notifications can be
+    // delivered even if the client has not finished running its setup event yet.
+    socket.join(socket.userId);
+
     // Track this socket in the per-user set
     if (!userSocketMap.has(socket.userId)) {
       userSocketMap.set(socket.userId, new Set());
