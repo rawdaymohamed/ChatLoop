@@ -201,7 +201,10 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    res.clearCookie(AUTH_COOKIE_NAME, getAuthCookieOptions({ includeMaxAge: false }));
+    res.clearCookie(
+      AUTH_COOKIE_NAME,
+      getAuthCookieOptions({ includeMaxAge: false }),
+    );
     res.json({ message: "Logged out successfully" });
   } catch (error) {
     console.error(error.message);
@@ -257,7 +260,7 @@ const sendotp = async (req, res) => {
         <!-- Header -->
         <tr>
         <td align="center" style="background-color:#6366f1;padding:36px 40px;">
-          <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:0.5px;">Conversa</h1>
+          <h1 style="margin:0;color:#ffffff;font-size:26px;font-weight:700;letter-spacing:0.5px;">ChatLoop</h1>
           <p style="margin:6px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">online chatting platform</p>
         </td>
         </tr>
