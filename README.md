@@ -19,6 +19,34 @@ A full-stack, production-grade real-time chat application built with the MERN st
 
 ---
 
+## Screenshots
+
+![Mockup screen](screenshots/ChatLoop.png)
+
+### Authentication
+
+![Login screen](screenshots/login.png)
+![Sign up screen](screenshots/signup.png)
+
+### Chat Experience
+
+![Chat screen](screenshots/chat.png)
+![Dark chat screen](screenshots/chat-dark.png)
+![Mobile chat screen](screenshots/chat-mobile.png)
+
+### AI Chatbot
+
+![Gemini chat screen](screenshots/gemini.png)
+![Dark Gemini chat screen](screenshots/gemini-dark.png)
+
+### Media & Profile
+
+![Upload image screen](screenshots/upload-image.png)
+![Chat image screen](screenshots/chat-img.png)
+![Profile screen](screenshots/profile.png)
+
+---
+
 ## Table of Contents
 
 - [Features](#features)
@@ -113,34 +141,6 @@ A full-stack, production-grade real-time chat application built with the MERN st
 - **React Router v7** nested route layout system (`DashboardLayout` → `ConversationLayout`)
 - **Sonner** toast notifications
 - **Markdown rendering** in bot messages via `react-markdown` + `remark-gfm`
-
----
-
-## Screenshots
-
-![Mockup screen](screenshots/ChatLoop.png)
-
-### Authentication
-
-![Login screen](screenshots/login.png)
-![Sign up screen](screenshots/signup.png)
-
-### Chat Experience
-
-![Chat screen](screenshots/chat.png)
-![Dark chat screen](screenshots/chat-dark.png)
-![Mobile chat screen](screenshots/chat-mobile.png)
-
-### AI Chatbot
-
-![Gemini chat screen](screenshots/gemini.png)
-![Dark Gemini chat screen](screenshots/gemini-dark.png)
-
-### Media & Profile
-
-![Upload image screen](screenshots/upload-image.png)
-![Chat image screen](screenshots/chat-img.png)
-![Profile screen](screenshots/profile.png)
 
 ---
 
