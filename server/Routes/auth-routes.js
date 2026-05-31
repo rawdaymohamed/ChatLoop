@@ -5,6 +5,7 @@ const {
   register,
   login,
   authUser,
+  logout,
   sendotp,
   sendVerificationOtp,
   verifyEmail,
@@ -13,6 +14,7 @@ const fetchuser = require("../middleware/fetchUser.js");
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/logout", logout);
 router.post("/getotp", sendotp);
 router.get("/me", fetchuser, authUser);
 router.post("/send-verification-otp", fetchuser, sendVerificationOtp);

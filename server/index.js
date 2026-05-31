@@ -5,8 +5,27 @@ const http = require("http");
 const PORT = 5500;
 const { initSocket } = require("./socket/index.js");
 const { startStaleOnlineUsersJob } = require("./jobs/staleOnlineUsers.js");
+const { CORS_ORIGIN, FRONTEND_URL } = require("./secrets.js");
 const app = express();
-app.use(cors());
+
+const isAllowedOrigin = (origin) =>
+  !origin ||
+  CORS_ORIGIN === "*" ||
+  origin === CORS_ORIGIN ||
+  origin === FRONTEND_URL;
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (isAllowedOrigin(origin)) {
+      callback(null, true);
+      return;
+    }
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(express.json({ limit: "50mb" }));
 

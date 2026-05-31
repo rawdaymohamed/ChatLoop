@@ -4,6 +4,10 @@ const nodemailer = require("nodemailer");
 const User = require("../Models/User.js");
 const Conversation = require("../Models/Conversation.js");
 const { JWT_SECRET, EMAIL, PASSWORD } = require("../secrets.js");
+const {
+  AUTH_COOKIE_NAME,
+  getAuthCookieOptions,
+} = require("../utils/auth-cookie.js");
 
 let mailTransporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
@@ -17,6 +21,10 @@ let mailTransporter = nodemailer.createTransport({
   greetingTimeout: 120000,
   socketTimeout: 120000,
 });
+
+const setAuthCookie = (res, token) => {
+  res.cookie(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
+};
 
 const register = async (req, res) => {
   // Registration involves 3 dependent DB writes:
@@ -91,8 +99,15 @@ const register = async (req, res) => {
     };
 
     const authtoken = jwt.sign(data, JWT_SECRET, { expiresIn: "7d" });
+    setAuthCookie(res, authtoken);
     res.json({
-      authtoken,
+      user: {
+        _id: newUser.id,
+        name: newUser.name,
+        email: newUser.email,
+        profilePic: newUser.profilePic,
+        isEmailVerified: newUser.isEmailVerified,
+      },
     });
   } catch (error) {
     // Something went wrong during one of the DB writes.
@@ -167,9 +182,9 @@ const login = async (req, res) => {
     };
 
     const authtoken = jwt.sign(data, JWT_SECRET, { expiresIn: "7d" });
+    setAuthCookie(res, authtoken);
 
     res.json({
-      authtoken,
       user: {
         _id: user.id,
         name: user.name,
@@ -178,6 +193,16 @@ const login = async (req, res) => {
         isEmailVerified: user.isEmailVerified,
       },
     });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+const logout = async (req, res) => {
+  try {
+    res.clearCookie(AUTH_COOKIE_NAME, getAuthCookieOptions({ includeMaxAge: false }));
+    res.json({ message: "Logged out successfully" });
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Internal Server Error");
@@ -444,6 +469,7 @@ module.exports = {
   register,
   login,
   authUser,
+  logout,
   sendotp,
   sendVerificationOtp,
   verifyEmail,

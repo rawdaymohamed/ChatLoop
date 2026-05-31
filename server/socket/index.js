@@ -1,7 +1,10 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const registerHandlers = require("./handlers");
-const { CORS_ORIGIN, JWT_SECRET } = require("../secrets");
+const { CORS_ORIGIN, FRONTEND_URL, JWT_SECRET } = require("../secrets");
+const {
+  getAuthTokenFromCookieHeader,
+} = require("../utils/auth-cookie.js");
 
 let io;
 
@@ -11,20 +14,35 @@ let io;
 // (handles multiple tabs / devices).
 const userSocketMap = new Map();
 
+const isAllowedOrigin = (origin) =>
+  !origin ||
+  CORS_ORIGIN === "*" ||
+  origin === CORS_ORIGIN ||
+  origin === FRONTEND_URL;
+
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: CORS_ORIGIN,
+      origin: (origin, callback) => {
+        if (isAllowedOrigin(origin)) {
+          callback(null, true);
+          return;
+        }
+        callback(new Error("Not allowed by CORS"));
+      },
+      credentials: true,
       methods: ["GET", "POST"],
     },
   });
   console.log("Socket.io initialized");
 
   // --- Authentication middleware ---
-  // Every socket connection must present a valid JWT in handshake.auth.token.
+  // Every socket connection must present a valid JWT in the auth cookie.
   // On success we attach socket.userId so handlers never trust client-supplied IDs.
   io.use((socket, next) => {
-    const token = socket.handshake.auth?.token;
+    const token =
+      getAuthTokenFromCookieHeader(socket.handshake.headers.cookie || "") ||
+      socket.handshake.auth?.token;
     if (!token) {
       return next(new Error("Authentication error: no token provided"));
     }

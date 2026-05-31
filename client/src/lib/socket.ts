@@ -11,7 +11,7 @@ const SOCKET_URL: string =
 
 const socket = io(SOCKET_URL, {
     autoConnect: false,
-    auth: { token: localStorage.getItem("auth-token") ?? "" },
+    withCredentials: true,
 });
 
 /* ─── payload types ─────────────────────────────────────────────────────── */
@@ -37,9 +37,8 @@ export interface TypingPayload {
 
 /* ─── connection helpers ───────────────────────────────────────────────── */
 
-/** Attach (or replace) the JWT and open the connection if not already open. */
-export const connectSocket = (token: string): void => {
-    (socket as unknown as { auth: Record<string, string> }).auth = { token };
+/** Open the connection if not already open. Cookie auth is sent automatically. */
+export const connectSocket = (): void => {
     if (!socket.connected) socket.connect();
 };
 

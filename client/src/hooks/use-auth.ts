@@ -22,56 +22,51 @@ export const useAuthProvider = () => {
     const [user, setUser] = useState<User | null>(null);
     const [isUserLoading, setIsUserLoading] = useState(true);
 
-    const _postLogin = async (token: string, userData?: User | null) => {
-        localStorage.setItem("auth-token", token);
+    const _postLogin = async (userData?: User | null) => {
         if (userData) {
             setUser(userData as User);
         } else {
             const me = await authApi.getMe<User>();
             setUser(me);
         }
-        connectSocket(token);
+        connectSocket();
         emitSetup();
     };
 
     const login = async (email: string, password: string) => {
         const data = await authApi.login({ email, password });
-        await _postLogin(data.authtoken, data.user as User | undefined);
+        await _postLogin(data.user as User | undefined);
     };
 
     const loginWithOtp = async (email: string, otp: string) => {
         const data = await authApi.login({ email, otp });
-        await _postLogin(data.authtoken, data.user as User | undefined);
+        await _postLogin(data.user as User | undefined);
     };
 
     const register = async (name: string, email: string, password: string) => {
         const data = await authApi.register({ name, email, password });
-        await _postLogin(data.authtoken);
+        await _postLogin(data.user as User | undefined);
     };
 
-    const logout = () => {
-        localStorage.removeItem("auth-token");
-        disconnectSocket();
-        setUser(null);
+    const logout = async () => {
+        try {
+            await authApi.logout();
+        } finally {
+            disconnectSocket();
+            setUser(null);
+        }
     };
 
     useEffect(() => {
         const bootstrap = async () => {
-            const token = localStorage.getItem("auth-token");
-
-            if (!token) {
-                setIsUserLoading(false);
-                return;
-            }
-
             try {
                 const user = await authApi.getMe<User>();
                 setUser(user);
 
-                connectSocket(token);
+                connectSocket();
                 emitSetup();
             } catch {
-                localStorage.removeItem("auth-token");
+                setUser(null);
             } finally {
                 setIsUserLoading(false);
             }

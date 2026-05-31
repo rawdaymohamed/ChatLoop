@@ -1,9 +1,9 @@
 /**
  * Centralized API client.
  *
- * Every HTTP call in the app goes through this file.  If the base URL, auth
- * header, or error-handling logic ever needs to change, there is exactly one
- * place to update.
+ * Every HTTP call in the app goes through this file. If the base URL, cookie
+ * credentials, or error-handling logic ever needs to change, there is exactly
+ * one place to update.
  */
 
 const API_BASE: string =
@@ -17,8 +17,7 @@ export interface LoginPayload {
     otp?: string;
 }
 
-export interface AuthTokenResponse {
-    authtoken: string;
+export interface AuthResponse {
     user?: {
         _id: string;
         name: string;
@@ -62,16 +61,23 @@ export interface NonFriendsParams {
 
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
-const getToken = (): string => localStorage.getItem("auth-token") ?? "";
-
 const headers = (extra: Record<string, string> = {}): Record<string, string> => ({
     "Content-Type": "application/json",
-    "auth-token": getToken(),
     ...extra,
 });
 
+const request = (input: RequestInfo | URL, init: RequestInit = {}) =>
+    fetch(input, {
+        ...init,
+        credentials: "include",
+        headers: headers(init.headers as Record<string, string> | undefined),
+    });
+
 const handleResponse = async <T = unknown>(res: Response): Promise<T> => {
-    const data = await res.json() as T & { error?: string };
+    const contentType = res.headers.get("content-type") ?? "";
+    const data = contentType.includes("application/json")
+        ? await res.json() as T & { error?: string }
+        : ({ error: await res.text() } as T & { error?: string });
     if (!res.ok) throw new Error(data.error ?? "Request failed");
     return data;
 };
@@ -88,41 +94,39 @@ const fileToDataUrl = (file: File): Promise<string> =>
 
 export const authApi = {
     login: (payload: LoginPayload) =>
-        fetch(`${API_BASE}/auth/login`, {
+        request(`${API_BASE}/auth/login`, {
             method: "POST",
-            headers: headers(),
             body: JSON.stringify(payload),
-        }).then((res) => handleResponse<AuthTokenResponse>(res)),
+        }).then((res) => handleResponse<AuthResponse>(res)),
 
     register: (payload: RegisterPayload) =>
-        fetch(`${API_BASE}/auth/register`, {
+        request(`${API_BASE}/auth/register`, {
             method: "POST",
-            headers: headers(),
             body: JSON.stringify(payload),
-        }).then((res) => handleResponse<AuthTokenResponse>(res)),
+        }).then((res) => handleResponse<AuthResponse>(res)),
 
     getMe: <T = unknown>() =>
-        fetch(`${API_BASE}/auth/me`, {
-            headers: headers(),
-        }).then((res) => handleResponse<T>(res)),
+        request(`${API_BASE}/auth/me`).then((res) => handleResponse<T>(res)),
+
+    logout: () =>
+        request(`${API_BASE}/auth/logout`, {
+            method: "POST",
+        }).then(handleResponse),
 
     sendOtp: (email: string) =>
-        fetch(`${API_BASE}/auth/getotp`, {
+        request(`${API_BASE}/auth/getotp`, {
             method: "POST",
-            headers: headers(),
             body: JSON.stringify({ email }),
         }).then(handleResponse),
 
     sendVerificationOtp: () =>
-        fetch(`${API_BASE}/auth/send-verification-otp`, {
+        request(`${API_BASE}/auth/send-verification-otp`, {
             method: "POST",
-            headers: headers(),
         }).then(handleResponse),
 
     verifyEmail: (otp: string) =>
-        fetch(`${API_BASE}/auth/verify-email`, {
+        request(`${API_BASE}/auth/verify-email`, {
             method: "POST",
-            headers: headers(),
             body: JSON.stringify({ otp }),
         }).then(handleResponse),
 };
@@ -131,26 +135,20 @@ export const authApi = {
 
 export const conversationApi = {
     list: <T = unknown>() =>
-        fetch(`${API_BASE}/conversation/`, {
-            headers: headers(),
-        }).then((res) => handleResponse<T>(res)),
+        request(`${API_BASE}/conversation/`).then((res) => handleResponse<T>(res)),
 
     get: <T = unknown>(id: string) =>
-        fetch(`${API_BASE}/conversation/${id}`, {
-            headers: headers(),
-        }).then((res) => handleResponse<T>(res)),
+        request(`${API_BASE}/conversation/${id}`).then((res) => handleResponse<T>(res)),
 
     create: (memberIds: string[]) =>
-        fetch(`${API_BASE}/conversation/`, {
+        request(`${API_BASE}/conversation/`, {
             method: "POST",
-            headers: headers(),
             body: JSON.stringify({ members: memberIds }),
         }).then(handleResponse),
 
     togglePin: (id: string) =>
-        fetch(`${API_BASE}/conversation/${id}/pin`, {
+        request(`${API_BASE}/conversation/${id}/pin`, {
             method: "POST",
-            headers: headers(),
         }).then((res) => handleResponse<{ isPinned: boolean }>(res)),
 };
 
@@ -158,49 +156,39 @@ export const conversationApi = {
 
 export const messageApi = {
     list: (conversationId: string, page: number = 1, limit: number = 50) =>
-        fetch(`${API_BASE}/message/${conversationId}?page=${page}&limit=${limit}`, {
-            headers: headers(),
-        }).then(handleResponse),
+        request(`${API_BASE}/message/${conversationId}?page=${page}&limit=${limit}`).then(handleResponse),
 
     delete: (messageId: string, scope: "me" | "everyone") =>
-        fetch(`${API_BASE}/message/${messageId}`, {
+        request(`${API_BASE}/message/${messageId}`, {
             method: "DELETE",
-            headers: headers(),
             body: JSON.stringify({ scope }),
         }).then(handleResponse),
 
     bulkDelete: (messageIds: string[]) =>
-        fetch(`${API_BASE}/message/bulk/hide`, {
+        request(`${API_BASE}/message/bulk/hide`, {
             method: "DELETE",
-            headers: headers(),
             body: JSON.stringify({ messageIds }),
         }).then(handleResponse),
 
     clearChat: (conversationId: string) =>
-        fetch(`${API_BASE}/message/clear/${conversationId}`, {
+        request(`${API_BASE}/message/clear/${conversationId}`, {
             method: "POST",
-            headers: headers(),
         }).then(handleResponse),
 
     toggleStar: (messageId: string) =>
-        fetch(`${API_BASE}/message/${messageId}/star`, {
+        request(`${API_BASE}/message/${messageId}/star`, {
             method: "POST",
-            headers: headers(),
         }).then((res) => handleResponse<{ isStarred: boolean; starredBy: string[] }>(res)),
 
     getStarred: <T = unknown>() =>
-        fetch(`${API_BASE}/message/starred`, {
-            headers: headers(),
-        }).then((res) => handleResponse<T>(res)),
+        request(`${API_BASE}/message/starred`).then((res) => handleResponse<T>(res)),
 };
 
 /* ─── users ────────────────────────────────────────────────────────────── */
 
 export const userApi = {
     getOnlineStatus: (userId: string) =>
-        fetch(`${API_BASE}/user/online-status/${userId}`, {
-            headers: headers(),
-        }).then(handleResponse),
+        request(`${API_BASE}/user/online-status/${userId}`).then(handleResponse),
 
     getNonFriends: (params: NonFriendsParams = {}) => {
         const qs = new URLSearchParams()
@@ -208,22 +196,18 @@ export const userApi = {
         if (params.sort)   qs.set("sort",   params.sort)
         if (params.page)   qs.set("page",   String(params.page))
         if (params.limit)  qs.set("limit",  String(params.limit))
-        return fetch(`${API_BASE}/user/non-friends?${qs.toString()}`, {
-            headers: headers(),
-        }).then(handleResponse)
+        return request(`${API_BASE}/user/non-friends?${qs.toString()}`).then(handleResponse)
     },
 
     updateProfile: (payload: UpdateProfilePayload) =>
-        fetch(`${API_BASE}/user/update`, {
+        request(`${API_BASE}/user/update`, {
             method: "PUT",
-            headers: headers(),
             body: JSON.stringify(payload),
         }).then(handleResponse),
 
     uploadImage: async (file: File, folder = "chatloop") =>
-        fetch(`${API_BASE}/user/upload-image`, {
+        request(`${API_BASE}/user/upload-image`, {
             method: "POST",
-            headers: headers(),
             body: JSON.stringify({
                 image: await fileToDataUrl(file),
                 filename: file.name,
@@ -232,26 +216,21 @@ export const userApi = {
         }).then((res) => handleResponse<UploadImageResponse>(res)),
 
     blockUser: (userId: string) =>
-        fetch(`${API_BASE}/user/block/${userId}`, {
+        request(`${API_BASE}/user/block/${userId}`, {
             method: "POST",
-            headers: headers(),
         }).then(handleResponse),
 
     unblockUser: (userId: string) =>
-        fetch(`${API_BASE}/user/block/${userId}`, {
+        request(`${API_BASE}/user/block/${userId}`, {
             method: "DELETE",
-            headers: headers(),
         }).then(handleResponse),
 
     getBlockStatus: (userId: string) =>
-        fetch(`${API_BASE}/user/block-status/${userId}`, {
-            headers: headers(),
-        }).then((res) => handleResponse<{ iBlockedThem: boolean; theyBlockedMe: boolean }>(res)),
+        request(`${API_BASE}/user/block-status/${userId}`).then((res) => handleResponse<{ iBlockedThem: boolean; theyBlockedMe: boolean }>(res)),
 
     deleteAccount: () =>
-        fetch(`${API_BASE}/user/delete`, {
+        request(`${API_BASE}/user/delete`, {
             method: "DELETE",
-            headers: headers(),
         }).then(handleResponse),
 };
 
