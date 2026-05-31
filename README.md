@@ -506,30 +506,3 @@ npm run dev            # Vite dev server — listens on :5173
 ### `staleOnlineUsers` (hourly cron)
 
 Runs every hour and sets `isOnline: false` + updates `lastSeen` for any user whose `isOnline` flag is still `true` but has no active sockets in `userSocketMap`. This recovers from crash scenarios where the `disconnect` event was never fired.
-
----
-
-## Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request with any improvements or bug fixes.
-
-**Steps to contribute:**
-
-1. Fork the repository and create a new branch for your feature or bug fix.
-2. Make your changes with clear commit messages.
-3. Ensure all tests pass and the application runs correctly.
-4. Submit a pull request describing your changes and why they should be merged.
-
-## License
-
-MIT — see the [LICENSE](LICENSE) file for details.
-
----
-
-## About the Author
-
-Built by **Pankil Soni**
-
-- Email: pmsoni2016@gmail.com
-- LinkedIn: [pankil-soni-5a0541170](https://www.linkedin.com/in/pankil-soni-5a0541170/)
-- Kaggle: [pankilsoni](https://www.kaggle.com/pankilsoni)
