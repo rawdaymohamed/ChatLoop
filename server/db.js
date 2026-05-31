@@ -1,11 +1,9 @@
 const mongoose = require("mongoose");
-const { MONGO_URI, MONGO_DB_NAME} = require("./secrets");
+const { MONGO_URI } = require("./secrets");
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(MONGO_URI, {
-      dbName: MONGO_DB_NAME,
-    });
+    const conn = await mongoose.connect(MONGO_URI);
 
     console.log(`✅ MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
