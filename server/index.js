@@ -7,6 +7,7 @@ const { initSocket } = require("./socket/index.js");
 const { startStaleOnlineUsersJob } = require("./jobs/staleOnlineUsers.js");
 const { CORS_ORIGIN, FRONTEND_URL } = require("./secrets.js");
 const app = express();
+connectDB(); // connect first
 
 const isAllowedOrigin = (origin) =>
   !origin ||
@@ -46,7 +47,6 @@ initSocket(server); // Initialize socket.io logic
 
 // Start server and connect to database
 const start = async () => {
-  await connectDB(); // connect first
   server.listen(PORT, () => {
     console.log(`🚀 Server started at http://localhost:${PORT}`);
   });
