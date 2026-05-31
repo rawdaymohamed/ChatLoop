@@ -1,51 +1,97 @@
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
-const { S3Client } = require("@aws-sdk/client-s3");
-const { createPresignedPost } = require("@aws-sdk/s3-presigned-post");
 const User = require("../Models/User.js");
 const Conversation = require("../Models/Conversation.js");
 const {
-  AWS_BUCKET_NAME,
-  AWS_SECRET,
-  AWS_ACCESS_KEY,
+  CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET,
 } = require("../secrets.js");
 
-const s3Client = new S3Client({
-  credentials: {
-    accessKeyId: AWS_ACCESS_KEY,
-    secretAccessKey: AWS_SECRET,
-  },
-  region: "ap-south-1",
-});
+const sanitizeFolder = (folder) => folder.replace(/^\/+|\/+$/g, "");
 
-const getPresignedUrl = async (req, res) => {
-  const filename = req.query.filename;
-  const filetype = req.query.filetype;
+const sanitizeFilename = (filename) =>
+  filename
+    .replace(/\.[^.]+$/, "")
+    .replace(/[^a-zA-Z0-9_-]/g, "_")
+    .slice(0, 60) || "upload";
 
-  if (!filename || !filetype) {
+const buildCloudinarySignature = (params, secret) => {
+  const payload = Object.entries(params)
+    .filter(([, value]) => value !== undefined && value !== null && value !== "")
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("&");
+
+  return crypto.createHash("sha1").update(`${payload}${secret}`).digest("hex");
+};
+
+const uploadImage = async (req, res) => {
+  const { image, filename, folder = "chatloop" } = req.body;
+
+  if (!image || !filename) {
     return res
       .status(400)
-      .json({ error: "Filename and filetype are required" });
+      .json({ error: "Image and filename are required" });
   }
 
-  if (!filetype.startsWith("image/")) {
-    return res.status(400).json({ error: "Invalid file type" });
+  if (typeof image !== "string" || !image.startsWith("data:image/")) {
+    return res.status(400).json({ error: "Invalid image payload" });
   }
 
-  const userId = req.user.id;
+  if (
+    !CLOUDINARY_CLOUD_NAME ||
+    !CLOUDINARY_API_KEY ||
+    !CLOUDINARY_API_SECRET
+  ) {
+    return res.status(500).json({
+      error: "Cloudinary is not configured on the server",
+    });
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const cleanFolder = sanitizeFolder(folder);
+  const publicId = `${crypto.randomUUID()}-${sanitizeFilename(filename)}`;
+  const signature = buildCloudinarySignature(
+    {
+      folder: cleanFolder,
+      public_id: publicId,
+      timestamp,
+    },
+    CLOUDINARY_API_SECRET,
+  );
 
   try {
-    const { url, fields } = await createPresignedPost(s3Client, {
-      Bucket: AWS_BUCKET_NAME,
-      Key: `conversa/${userId}/${crypto.randomUUID()}-${filename}`,
-      Conditions: [["content-length-range", 0, 5 * 1024 * 1024]],
-      Fields: {
-        success_action_status: "201",
-      },
-      Expires: 15 * 60,
-    });
+    const formData = new FormData();
+    formData.append("file", image);
+    formData.append("api_key", CLOUDINARY_API_KEY);
+    formData.append("timestamp", timestamp);
+    formData.append("folder", cleanFolder);
+    formData.append("public_id", publicId);
+    formData.append("signature", signature);
 
-    return res.status(200).json({ url, fields });
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: data?.error?.message || "Image upload failed",
+      });
+    }
+
+    return res.status(200).json({
+      imageUrl: data.secure_url,
+      publicId: data.public_id,
+      width: data.width,
+      height: data.height,
+      format: data.format,
+    });
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
@@ -273,7 +319,7 @@ const deleteAccount = async (req, res) => {
 };
 
 module.exports = {
-  getPresignedUrl,
+  uploadImage,
   getOnlineStatus,
   getNonFriendsList,
   updateprofile,

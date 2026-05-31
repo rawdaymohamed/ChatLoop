@@ -5,9 +5,6 @@ import {
   EyeOff,
   ArrowLeft,
   MessageCircle,
-  Zap,
-  Shield,
-  Bot,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,38 +12,6 @@ import { Label } from "@/components/ui/label"
 import { Spinner } from "@/components/ui/spinner"
 import { useAuth } from "@/hooks/use-auth"
 import { toast } from "sonner"
-
-// Floating feature cards shown on large screens
-const spotlights = [
-  {
-    title: "Lightning fast",
-    desc: "Messages delivered instantly via WebSocket connections.",
-    icon: Zap,
-    side: "left" as const,
-    top: "20%",
-  },
-  {
-    title: "Private & secure",
-    desc: "Your conversations stay between you and the people you trust.",
-    icon: Shield,
-    side: "left" as const,
-    top: "52%",
-  },
-  {
-    title: "Personal AI Chatbot",
-    desc: "Chat with your own AI assistant, powered by Gemini.",
-    icon: Bot,
-    side: "right" as const,
-    top: "20%",
-  },
-  {
-    title: "Passwordless login",
-    desc: "Sign in instantly with a one-time code sent to your inbox.",
-    icon: MessageCircle,
-    side: "right" as const,
-    top: "52%",
-  },
-]
 
 export default function SignUp() {
   const navigate = useNavigate()

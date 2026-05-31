@@ -9,21 +9,21 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
 const EMAIL = process.env.EMAIL;
 const PASSWORD = process.env.PASSWORD;
-const AWS_BUCKET_NAME = process.env.AWS_BUCKET_NAME;
-const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
-const AWS_SECRET = process.env.AWS_SECRET;
+const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
+const CLOUDINARY_API_KEY = process.env.CLOUDINARY_API_KEY;
+const CLOUDINARY_API_SECRET = process.env.CLOUDINARY_API_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 module.exports = {
   CORS_ORIGIN,
   MONGO_URI,
   MONGO_DB_NAME,
   JWT_SECRET,
-  AWS_ACCESS_KEY,
-  AWS_SECRET,
   GEMINI_API_KEY,
   GEMINI_MODEL,
   EMAIL,
   PASSWORD,
-  AWS_BUCKET_NAME,
+  CLOUDINARY_CLOUD_NAME,
+  CLOUDINARY_API_KEY,
+  CLOUDINARY_API_SECRET,
   FRONTEND_URL,
 };

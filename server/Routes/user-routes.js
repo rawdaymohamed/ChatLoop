@@ -3,7 +3,7 @@ const router = express.Router();
 const fetchuser = require("../middleware/fetchUser.js");
 
 const {
-  getPresignedUrl,
+  uploadImage,
   getOnlineStatus,
   getNonFriendsList,
   updateprofile,
@@ -16,7 +16,7 @@ const {
 router.put("/update", fetchuser, updateprofile);
 router.get("/online-status/:id", fetchuser, getOnlineStatus);
 router.get("/non-friends", fetchuser, getNonFriendsList);
-router.get("/presigned-url", fetchuser, getPresignedUrl);
+router.post("/upload-image", fetchuser, uploadImage);
 router.post("/block/:id", fetchuser, blockUser);
 router.delete("/block/:id", fetchuser, unblockUser);
 router.get("/block-status/:id", fetchuser, getBlockStatus);

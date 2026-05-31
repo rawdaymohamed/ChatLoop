@@ -43,6 +43,14 @@ export interface UpdateProfilePayload {
     emailNotificationsEnabled?: boolean;
 }
 
+export interface UploadImageResponse {
+    imageUrl: string;
+    publicId: string;
+    width?: number;
+    height?: number;
+    format?: string;
+}
+
 export type NonFriendsSort = "name_asc" | "name_desc" | "last_seen_recent" | "last_seen_oldest";
 
 export interface NonFriendsParams {
@@ -67,6 +75,14 @@ const handleResponse = async <T = unknown>(res: Response): Promise<T> => {
     if (!res.ok) throw new Error(data.error ?? "Request failed");
     return data;
 };
+
+const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(String(reader.result ?? ""))
+        reader.onerror = () => reject(new Error("Failed to read file"))
+        reader.readAsDataURL(file)
+    })
 
 /* ─── auth ─────────────────────────────────────────────────────────────── */
 
@@ -204,11 +220,16 @@ export const userApi = {
             body: JSON.stringify(payload),
         }).then(handleResponse),
 
-    getPresignedUrl: (filename: string, filetype: string) =>
-        fetch(
-            `${API_BASE}/user/presigned-url?filename=${encodeURIComponent(filename)}&filetype=${encodeURIComponent(filetype)}`,
-            { headers: headers() }
-        ).then(handleResponse),
+    uploadImage: async (file: File, folder = "chatloop") =>
+        fetch(`${API_BASE}/user/upload-image`, {
+            method: "POST",
+            headers: headers(),
+            body: JSON.stringify({
+                image: await fileToDataUrl(file),
+                filename: file.name,
+                folder,
+            }),
+        }).then((res) => handleResponse<UploadImageResponse>(res)),
 
     blockUser: (userId: string) =>
         fetch(`${API_BASE}/user/block/${userId}`, {
