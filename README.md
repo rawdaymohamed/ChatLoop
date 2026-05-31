@@ -13,7 +13,7 @@
 ![Google Gemini](https://img.shields.io/badge/Google%20Gemini-AI-4285F4?style=flat&logo=google&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)
 
-A full-stack, production-grade real-time chat application built with the MERN stack and Socket.IO. Features include one-on-one messaging, a personalised AI chatbot powered by Google Gemini, image sharing via AWS S3, email verification, email notifications, and a fully responsive dark/light UI built with React 19, TypeScript, Tailwind CSS v4, and shadcn/ui components.
+A full-stack, production-grade real-time chat application built with the MERN stack and Socket.IO. Features include one-on-one messaging, a personalised AI chatbot powered by Google Gemini, image sharing via Cloudinary, email verification, email notifications, and a fully responsive dark/light UI built with React 19, TypeScript, Tailwind CSS v4, and shadcn/ui components.
 
 </div>
 
@@ -82,7 +82,7 @@ A full-stack, production-grade real-time chat application built with the MERN st
 
 - Update name, about text, and profile picture
 - Change password (old password verification required)
-- Profile pictures uploaded directly from the browser to AWS S3 via pre-signed POST URLs (max 5 MB, images only); removal resets to a generated ui-avatars.com URL
+- Profile pictures uploaded directly from the browser to Cloudinary (max 5 MB, images only); removal resets to a generated ui-avatars.com URL
 
 ### Messaging
 
@@ -154,7 +154,7 @@ A full-stack, production-grade real-time chat application built with the MERN st
 | **Real-time**        | Socket.IO 4 (server + client)                                                  |
 | **Authentication**   | JSON Web Tokens (jsonwebtoken), bcryptjs                                       |
 | **AI**               | Google Gemini via `@google/genai`                                              |
-| **File Storage**     | AWS S3 (pre-signed POST uploads)                                               |
+| **File Storage**     | Cloudinary                                                                     |
 | **Email**            | Nodemailer (Gmail SMTP) — OTP login, email verification, message notifications |
 | **Containerisation** | Docker, Docker Compose                                                         |
 
@@ -455,7 +455,7 @@ cd ChatLoop
 
 # 2. Create your .env from the template
 cp .env.example .env
-# Edit .env — set JWT_SECRET, GEMINI_API_KEY, EMAIL, PASSWORD, AWS_*, etc.
+# Edit .env — set JWT_SECRET, GEMINI_API_KEY, EMAIL, PASSWORD, Cloudinary, etc.
 
 # 3. Build and start all three services (mongo + backend + frontend)
 docker compose up --build -d
@@ -520,7 +520,6 @@ npm run dev            # Vite dev server — listens on :5173
 - **Block enforcement** — the server checks block status before processing every `send-message` event; a blocked sender receives `message-blocked` instead
 - **Conversation membership** — every `join-chat` and `send-message` handler verifies the authenticated user is a member of the target conversation
 - **Email verification gate** — the `DashboardLayout` component redirects unverified users to `/verify-email` before they can access any chat functionality; bot accounts are pre-verified at creation
-- **S3 pre-signed uploads** — the client never receives AWS credentials; uploads go directly to S3 through a short-lived pre-signed POST URL generated server-side
 - **Non-root Docker user** — the backend container runs as an unprivileged `appuser`
 - **Account anonymisation** — deleted accounts have credentials wiped and PII replaced with generic values; the document is retained (flagged `isDeleted: true`) to preserve conversation context for other participants
 
